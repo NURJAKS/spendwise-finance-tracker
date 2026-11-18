@@ -1,0 +1,17 @@
+{
+  "name": "SpendWise — Учет финансов",
+  "short_name": "SpendWise",
+  "description": "Персональный финансовый трекер с бюджетами, сравнением периодов и прогнозом расходов",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090D16",
+  "theme_color": "#6C7CFF",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

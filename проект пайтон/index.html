@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SpendWise — Умный учёт финансов</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#6C7CFF">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="brand">
+      <div class="brand-mark" id="brandIcon"></div>
+      <div class="logo">SpendWise</div>
+    </div>
+
+    <nav class="tabs view-tabs" id="viewTabs" aria-label="Разделы">
+      <button type="button" data-view="overview" class="active">Обзор</button>
+      <button type="button" data-view="planning">Бюджеты и цели</button>
+      <button type="button" data-view="manage">Счета и настройки</button>
+    </nav>
+
+    <div class="header-actions">
+      <button type="button" class="icon-btn" id="themeBtn" aria-label="Сменить тему" title="Сменить тему"></button>
+      <button type="button" class="btn btn-primary" id="addBtn">+ Добавить</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- ==================== VIEW: OVERVIEW ==================== -->
+    <div id="view-overview" class="view-section">
+      <section class="period">
+        <div class="tabs" id="tabs">
+          <button type="button" data-period="day">День</button>
+          <button type="button" data-period="week">Неделя</button>
+          <button type="button" data-period="month" class="active">Месяц</button>
+        </div>
+        <div class="nav">
+          <button type="button" class="icon-btn" id="prevBtn" aria-label="Назад">‹</button>
+          <span id="periodLabel">…</span>
+          <button type="button" class="icon-btn" id="nextBtn" aria-label="Вперёд">›</button>
+          <button type="button" class="btn btn-sm" id="todayBtn" title="К текущей дате (T)">Сегодня</button>
+        </div>
+      </section>
+
+      <section class="cards">
+        <div class="card balance">
+          <div class="card-top">
+            <span>Остаток за период</span>
+            <span class="pill-light" id="safeSpendPill" hidden></span>
+          </div>
+          <strong id="balance">0 ₸</strong>
+        </div>
+        <div class="card income">
+          <div class="card-top">
+            <span>Доход</span>
+            <span class="delta" id="incomeDelta" hidden></span>
+          </div>
+          <strong id="income">0 ₸</strong>
+        </div>
+        <div class="card expense">
+          <div class="card-top">
+            <span>Расход</span>
+            <span class="delta" id="expenseDelta" hidden></span>
+          </div>
+          <strong id="expense">0 ₸</strong>
+        </div>
+      </section>
+
+      <section class="analytics-grid">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Структура по категориям</h2>
+            <div class="tabs tabs-sm" id="statsTypeTabs">
+              <button type="button" data-type="expense" class="active">Расходы</button>
+              <button type="button" data-type="income">Доходы</button>
+            </div>
+          </div>
+          <p class="hint-sub">Нажмите на категорию, чтобы отфильтровать список операций</p>
+          <div class="chart-wrap" id="chartWrap" hidden>
+            <div class="chart-box"><canvas id="chart"></canvas></div>
+            <ul class="legend" id="legend"></ul>
+          </div>
+          <p class="empty" id="chartEmpty">Операций за этот период нет</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Сравнение: прошлый и текущий период</h2>
+              <p class="hint-sub" id="compSub">Наложение графиков для наглядного сравнения динамики</p>
+            </div>
+            <div class="tabs tabs-sm" id="compModeTabs">
+              <button type="button" data-mode="cumulative" class="active">Накопительно</button>
+              <button type="button" data-mode="daily">По дням</button>
+            </div>
+          </div>
+          <div class="comp-meta" id="compMeta"></div>
+          <div class="line-chart-box" id="comparisonWrap" hidden>
+            <canvas id="comparisonChart"></canvas>
+          </div>
+          <p class="empty" id="comparisonEmpty">Недостаточно данных для сравнения периодов</p>
+        </div>
+      </section>
+
+      <section class="panel forecast-panel">
+        <div class="panel-head">
+          <div>
+            <h2 id="forecastTitle">Прогноз расходов на будущий месяц</h2>
+            <p class="hint-sub">На основе истории трат, текущего темпа и регулярных платежей</p>
+          </div>
+          <span class="badge" id="forecastConfidence">—</span>
+        </div>
+
+        <div class="forecast-kpis">
+          <div class="fkpi">
+            <span class="fkpi-label" id="forecastNextLabel">Прогноз на след. месяц</span>
+            <strong id="forecastNext">0 ₸</strong>
+            <small id="forecastTrend" class="muted"></small>
+          </div>
+          <div class="fkpi">
+            <span class="fkpi-label" id="forecastCurLabel">Ожидаемый итог месяца</span>
+            <strong id="forecastCurrentProj">0 ₸</strong>
+            <small id="forecastCurrentActual" class="muted"></small>
+          </div>
+          <div class="fkpi">
+            <span class="fkpi-label">Вероятный диапазон</span>
+            <strong id="forecastRange">0 ₸</strong>
+            <small class="muted">С учётом колебаний</small>
+          </div>
+          <div class="fkpi">
+            <span class="fkpi-label">Прогноз остатка</span>
+            <strong id="forecastSavings">0 ₸</strong>
+            <small id="forecastIncomeEst" class="muted"></small>
+          </div>
+        </div>
+
+        <div class="forecast-grid">
+          <div class="forecast-chart-col">
+            <div class="line-chart-box" id="forecastChartWrap" hidden>
+              <canvas id="forecastChart"></canvas>
+            </div>
+            <p class="empty" id="forecastEmpty">Добавьте операции для расчёта прогноза</p>
+            <ul class="insights" id="forecastInsights"></ul>
+          </div>
+          <div class="forecast-cats-col">
+            <h3>Прогноз по категориям</h3>
+            <div id="forecastCats" class="forecast-cats"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head wrap-head">
+          <div class="title-with-chip">
+            <h2>Операции</h2>
+            <button type="button" class="filter-chip" id="clearCatFilter" hidden></button>
+          </div>
+          <div class="toolbar">
+            <input id="searchInput" class="search-input" type="search" placeholder="Поиск по заметке или категории…" autocomplete="off">
+            <div class="tabs tabs-sm" id="listTypeTabs">
+              <button type="button" data-type="" class="active">Все</button>
+              <button type="button" data-type="expense">Расходы</button>
+              <button type="button" data-type="income">Доходы</button>
+            </div>
+            <select id="accountFilter" class="select-sm" aria-label="Фильтр по счёту">
+              <option value="">Все счета</option>
+            </select>
+            <button type="button" class="btn btn-sm" id="exportCsvBtn" title="Экспорт в CSV"></button>
+          </div>
+        </div>
+        <div id="list"></div>
+      </section>
+    </div>
+
+    <!-- ==================== VIEW: PLANNING ==================== -->
+    <div id="view-planning" class="view-section" hidden>
+      <section class="panel">
+        <div class="panel-head wrap-head">
+          <div>
+            <h2>Бюджеты на <span id="budgetMonthLabel">…</span></h2>
+            <p class="hint-sub">Установите месячный лимит по категориям, чтобы контролировать расходы</p>
+          </div>
+          <div class="budget-stats" id="budgetOverviewStats"></div>
+        </div>
+        <div id="budgetsList" class="budgets-list"></div>
+      </section>
+
+      <section class="two-col-grid">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Цели накоплений</h2>
+          </div>
+          <form id="goalForm" class="inline-form">
+            <input id="goalName" type="text" maxlength="80" placeholder="Название цели (напр. Ноутбук)" required>
+            <input id="goalTarget" type="number" min="1" placeholder="Цель, ₸" required>
+            <input id="goalDeadline" type="date" aria-label="Срок">
+            <button type="submit" class="btn btn-primary btn-sm">+ Цель</button>
+          </form>
+          <div id="goalsList" class="stack-list"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head wrap-head">
+            <div>
+              <h2>Регулярные платежи</h2>
+              <p class="hint-sub">Стипендия, проездной, аренда, подписки</p>
+            </div>
+            <button type="button" class="btn btn-primary btn-sm" id="applyRecurringBtn">Начислить за месяц</button>
+          </div>
+          <form id="recurringForm" class="inline-form">
+            <select id="recType" aria-label="Тип">
+              <option value="expense">Расход</option>
+              <option value="income">Доход</option>
+            </select>
+            <select id="recCategory" aria-label="Категория"></select>
+            <input id="recAmount" type="number" min="1" placeholder="Сумма, ₸" required>
+            <input id="recDay" type="number" min="1" max="31" value="1" title="День месяца" aria-label="День месяца">
+            <input id="recNote" type="text" maxlength="100" placeholder="Описание (напр. Onay)">
+            <button type="submit" class="btn btn-primary btn-sm">+ Правило</button>
+          </form>
+          <div id="recurringList" class="stack-list"></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ==================== VIEW: MANAGE ==================== -->
+    <div id="view-manage" class="view-section" hidden>
+      <section class="two-col-grid">
+        <div class="panel">
+          <div class="panel-head wrap-head">
+            <div>
+              <h2>Счета и кошельки</h2>
+              <p class="hint-sub">Разделяйте карту, наличные и сбережения</p>
+            </div>
+            <button type="button" class="btn btn-sm" id="openTransferBtn">Перевод между счетами</button>
+          </div>
+          <div id="accountsList" class="accounts-grid"></div>
+          <form id="accountForm" class="inline-form">
+            <input id="accName" type="text" maxlength="48" placeholder="Новый счёт (напр. Kaspi Gold)" required>
+            <select id="accType" aria-label="Тип счёта">
+              <option value="card">Карта</option>
+              <option value="cash">Наличные</option>
+              <option value="savings">Копилка</option>
+            </select>
+            <input id="accInitial" type="number" value="0" placeholder="Начальный остаток, ₸">
+            <button type="submit" class="btn btn-primary btn-sm">+ Добавить счёт</button>
+          </form>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Категории</h2>
+              <p class="hint-sub">Создавайте свои категории с цветом и иконкой</p>
+            </div>
+          </div>
+          <form id="categoryForm" class="cat-form">
+            <div class="cat-form-row">
+              <input id="catName" type="text" maxlength="48" placeholder="Название категории" required>
+              <select id="catType" aria-label="Тип категории">
+                <option value="expense">Расход</option>
+                <option value="income">Доход</option>
+              </select>
+              <input id="catColor" type="color" value="#6C7CFF" aria-label="Цвет">
+              <button type="submit" class="btn btn-primary btn-sm">+ Создать</button>
+            </div>
+            <div id="catIconPicker" class="icon-picker"></div>
+          </form>
+          <div id="categoriesList" class="stack-list"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head wrap-head">
+          <div>
+            <h2>Импорт выписки из CSV</h2>
+            <p class="hint-sub">Загрузите CSV-файл или вставьте строки формата: <code>дата;тип;сумма;категория;заметка</code></p>
+          </div>
+          <label class="btn btn-sm upload-label">
+            Выбрать CSV-файл
+            <input id="csvFileInput" type="file" accept=".csv,.txt" hidden>
+          </label>
+        </div>
+        <textarea id="csvPasteInput" class="csv-textarea" rows="4" placeholder="2026-11-10;expense;3500;Продукты;Супермаркет Magnum&#10;2026-11-05;income;140000;Стипендия/Зарплата;Стипендия"></textarea>
+        <div class="csv-actions">
+          <button type="button" class="btn btn-sm" id="parseCsvBtn">Распознать и проверить</button>
+          <button type="button" class="btn btn-primary btn-sm" id="confirmImportBtn" hidden>Импортировать выбранные</button>
+        </div>
+        <div id="csvPreview" class="csv-preview"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer-hints">
+    <span>Горячие клавиши: <kbd>N</kbd> новая операция · <kbd>T</kbd> сегодня · <kbd>←</kbd> <kbd>→</kbd> навигация по периодам</span>
+  </footer>
+
+  <!-- ==================== MODAL: CREATE / EDIT TRANSACTION ==================== -->
+  <div class="overlay" id="modal" hidden>
+    <form class="modal" id="form" novalidate>
+      <div class="modal-head">
+        <h3 id="modalTitle">Новая операция</h3>
+        <button type="button" class="icon-btn" id="closeModal" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="tabs" id="typeTabs">
+        <button type="button" data-type="expense" class="active">Расход</button>
+        <button type="button" data-type="income">Доход</button>
+      </div>
+      <label class="field">Сумма, ₸
+        <input id="amount" class="amount" type="text" inputmode="numeric" placeholder="0" autocomplete="off">
+      </label>
+      <div class="field-row">
+        <label class="field">Счёт
+          <select id="accountSelect"></select>
+        </label>
+        <label class="field">Дата
+          <input id="dateInput" type="date">
+        </label>
+      </div>
+      <label class="field">Заметка
+        <input id="note" type="text" maxlength="100" placeholder="Например, Magnum или Onay">
+      </label>
+      <div class="field">
+        <div class="field-label-row">
+          <span>Категория</span>
+          <button type="button" class="suggest-pill" id="suggestPill" hidden></button>
+        </div>
+        <div class="chips" id="chips"></div>
+      </div>
+      <button type="submit" class="btn btn-primary wide" id="submitTxBtn">Сохранить</button>
+    </form>
+  </div>
+
+  <!-- ==================== MODAL: TRANSFER ==================== -->
+  <div class="overlay" id="transferModal" hidden>
+    <form class="modal small" id="transferForm" novalidate>
+      <div class="modal-head">
+        <h3>Перевод между счетами</h3>
+        <button type="button" class="icon-btn" id="closeTransferModal" aria-label="Закрыть">✕</button>
+      </div>
+      <label class="field">Откуда
+        <select id="trFrom"></select>
+      </label>
+      <label class="field">Куда
+        <select id="trTo"></select>
+      </label>
+      <label class="field">Сумма, ₸
+        <input id="trAmount" type="number" min="1" placeholder="0" required>
+      </label>
+      <label class="field">Дата
+        <input id="trDate" type="date" required>
+      </label>
+      <label class="field">Комментарий
+        <input id="trNote" type="text" maxlength="100" placeholder="Необязательно">
+      </label>
+      <button type="submit" class="btn btn-primary wide">Выполнить перевод</button>
+    </form>
+  </div>
+
+  <!-- ==================== MODAL: CONFIRM DELETE ==================== -->
+  <div class="overlay" id="confirm" hidden>
+    <div class="modal small">
+      <h3>Удалить операцию?</h3>
+      <p class="muted">Это действие нельзя отменить.</p>
+      <div class="row">
+        <button type="button" class="btn" id="cancelDel">Отмена</button>
+        <button type="button" class="btn btn-danger" id="okDel">Удалить</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toasts"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="js/icons.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/chart.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

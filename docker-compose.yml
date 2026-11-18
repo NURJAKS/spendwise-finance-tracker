@@ -1,0 +1,12 @@
+services:
+  spendwise:
+    build: .
+    container_name: spendwise-app
+    ports:
+      - "8000:8000"
+    volumes:
+      - spendwise_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  spendwise_data:
